@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC3_RPYM-Y4m29rSQca2VavAxCLrErX0Ug",
@@ -12,4 +12,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const dbFirestore = getFirestore(app);
+
+// Inicializa o Firestore com configurações explícitas de cache offline
+// Isso corrige o erro de timeout ao tentar conectar com o backend
+export const dbFirestore = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
