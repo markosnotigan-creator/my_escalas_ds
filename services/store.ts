@@ -53,6 +53,8 @@ class StoreService {
       snapshot.forEach((doc) => {
         soldiers.push(doc.data() as Soldier);
       });
+      // Se vier vazio do firebase, não sobrescrevemos o local se tivermos dados iniciais "mockados"
+      // Apenas atualizamos se tiver dados reais.
       if (soldiers.length > 0) {
         this.setLocal('soldiers', soldiers);
       }
@@ -106,6 +108,32 @@ class StoreService {
     } catch (e) {
       console.error(`Erro ao deletar de ${collectionName}:`, e);
     }
+  }
+
+  // --- PUBLIC SYNC METHOD (Manual Trigger) ---
+  // Útil para enviar dados locais iniciais para a nuvem
+  async syncAllToCloud(): Promise<void> {
+     // Settings
+     const settings = this.getSettings();
+     await this.syncToCloud('config', 'app_settings', settings);
+
+     // Soldiers
+     const soldiers = this.getSoldiers();
+     for (const s of soldiers) {
+       await this.syncToCloud('soldiers', s.id, s);
+     }
+
+     // Rosters
+     const rosters = this.getRosters();
+     for (const r of rosters) {
+       await this.syncToCloud('rosters', r.id, r);
+     }
+
+     // History
+     const history = this.getExtraDutyHistory();
+     for (const h of history) {
+       await this.syncToCloud('extra_duty_history', h.id, h);
+     }
   }
 
   // --- LOCAL STORE LOGIC ---
