@@ -1,0 +1,21 @@
+{
+  "name": "Escalas DS/PMCE",
+  "short_name": "Escalas DS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#102a43",
+  "theme_color": "#102a43",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Bras%C3%A3o_da_Pol%C3%ADcia_Militar_do_Cear%C3%A1.png/240px-Bras%C3%A3o_da_Pol%C3%ADcia_Militar_do_Cear%C3%A1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Bras%C3%A3o_da_Pol%C3%ADcia_Militar_do_Cear%C3%A1.png/240px-Bras%C3%A3o_da_Pol%C3%ADcia_Militar_do_Cear%C3%A1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
