@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { db } from '../services/store';
 import { AppSettings, RosterCategory, Soldier, Rank, Role, Status } from '../types';
-import { Save, Upload, Calendar, MapPin, Layers, Plus, Trash2, Edit2, ShieldAlert, Check, X, Image as ImageIcon, Eye, EyeOff, FileSpreadsheet, Download, Lock, Key, Database, RefreshCw, AlertTriangle, CloudUpload, Loader2 } from 'lucide-react';
+import { Save, Upload, Calendar, MapPin, Layers, Plus, Trash2, Edit2, ShieldAlert, Check, X, Image as ImageIcon, Eye, EyeOff, FileSpreadsheet, Download, Lock, Key, Database, RefreshCw, AlertTriangle } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>(db.getSettings());
@@ -16,7 +16,6 @@ export const Settings: React.FC = () => {
 
   // Estado para Backup do Sistema
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
 
   // Estado para Alteração de Senha
   const [pwdData, setPwdData] = useState({ current: '', new: '', confirm: '' });
@@ -148,21 +147,6 @@ export const Settings: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleSyncToCloud = async () => {
-    if (!confirm("Isso enviará TODOS os dados locais atuais (Militares, Escalas, Configs) para o banco de dados online (Firebase), SOBRESCREVENDO o que estiver lá se houver conflito de IDs.\n\nUse isso se for a primeira vez configurando ou se este PC for o 'Mestre'. Deseja continuar?")) return;
-    
-    setIsSyncingCloud(true);
-    try {
-      await db.syncAllToCloud();
-      alert("Sincronização concluída! Seus dados locais agora estão na nuvem.");
-    } catch (e) {
-      alert("Erro ao sincronizar. Verifique sua conexão ou configuração.");
-      console.error(e);
-    } finally {
-      setIsSyncingCloud(false);
-    }
-  };
-
   // --- LÓGICA DE IMPORTAÇÃO (Excel/Texto) ---
   const getShortRole = (role: Role): string => {
     switch (role) {
@@ -236,37 +220,23 @@ export const Settings: React.FC = () => {
       {/* SEÇÃO: BACKUP E DADOS (NOVO) */}
       <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
         <h3 className="text-lg font-black text-pm-900 mb-6 border-b pb-4 flex items-center uppercase tracking-tighter">
-          <Database size={22} className="mr-2 text-pm-700"/> Backup e Sincronização
+          <Database size={22} className="mr-2 text-pm-700"/> Backup e Restauração de Dados
         </h3>
         
         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
            <div className="flex items-start space-x-3">
               <AlertTriangle className="text-blue-600 flex-shrink-0" size={24} />
               <div>
-                 <h4 className="font-bold text-blue-900 text-sm uppercase mb-1">Status da Sincronização</h4>
+                 <h4 className="font-bold text-blue-900 text-sm uppercase mb-1">Onde meus dados estão salvos?</h4>
                  <p className="text-xs text-blue-800 leading-relaxed">
-                    O sistema opera em modo Híbrido. Os dados são salvos no seu PC e, se houver internet, sincronizados automaticamente com o Firebase.
-                    Use o botão abaixo caso esteja configurando um novo PC ou queira forçar o envio dos dados locais para a nuvem.
+                    Atualmente, todos os dados estão salvos apenas neste computador (no navegador). 
+                    Para garantir a segurança ou transferir para outro PC, utilize os botões abaixo.
                  </p>
               </div>
            </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           <button 
-             onClick={handleSyncToCloud}
-             disabled={isSyncingCloud}
-             className="flex flex-col items-center justify-center p-6 border-2 border-indigo-200 border-dashed rounded-2xl hover:bg-indigo-50 hover:border-indigo-500 transition-all group disabled:opacity-50"
-           >
-              <div className="bg-indigo-100 p-4 rounded-full mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors text-indigo-700">
-                 {isSyncingCloud ? <Loader2 size={32} className="animate-spin"/> : <CloudUpload size={32} />}
-              </div>
-              <h4 className="font-black text-pm-900 uppercase">Enviar Dados Locais para Nuvem</h4>
-              <p className="text-xs text-center text-gray-500 mt-1 px-4">
-                 Força o upload de todos os dados deste computador para o banco online. Útil para inicializar o banco.
-              </p>
-           </button>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            <button 
              onClick={handleExportBackup}
              className="flex flex-col items-center justify-center p-6 border-2 border-pm-200 border-dashed rounded-2xl hover:bg-pm-50 hover:border-pm-500 transition-all group"
@@ -274,9 +244,9 @@ export const Settings: React.FC = () => {
               <div className="bg-pm-100 p-4 rounded-full mb-3 group-hover:bg-pm-600 group-hover:text-white transition-colors text-pm-700">
                  <Download size={32} />
               </div>
-              <h4 className="font-black text-pm-900 uppercase">Baixar Backup Local</h4>
+              <h4 className="font-black text-pm-900 uppercase">Baixar Backup Completo</h4>
               <p className="text-xs text-center text-gray-500 mt-1 px-4">
-                 Gera um arquivo (.json) com os dados atuais. Guarde este arquivo como segurança offline.
+                 Gera um arquivo (.json) contendo todos os militares, escalas e configurações. Guarde este arquivo em local seguro.
               </p>
            </button>
 
@@ -287,9 +257,10 @@ export const Settings: React.FC = () => {
               <div className="bg-orange-100 p-4 rounded-full mb-3 group-hover:bg-orange-600 group-hover:text-white transition-colors text-orange-700">
                  <RefreshCw size={32} />
               </div>
-              <h4 className="font-black text-pm-900 uppercase">Restaurar Backup Local</h4>
+              <h4 className="font-black text-pm-900 uppercase">Restaurar Backup</h4>
               <p className="text-xs text-center text-gray-500 mt-1 px-4">
-                 Carrega um arquivo .json localmente. <span className="font-bold text-red-500">ATENÇÃO: Substitui dados atuais.</span>
+                 Carrega um arquivo de backup salvo anteriormente. 
+                 <span className="font-bold text-red-500 block mt-1">ATENÇÃO: Substitui os dados atuais.</span>
               </p>
               <input 
                 type="file" 

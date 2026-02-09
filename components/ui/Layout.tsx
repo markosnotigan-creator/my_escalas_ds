@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Users, 
   Settings, 
   LogOut, 
   ShieldAlert,
   Scale,
-  LayoutDashboard
+  LayoutDashboard,
+  Download
 } from 'lucide-react';
 import { db } from '../../services/store';
 
@@ -19,6 +20,30 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate }) => {
   const user = db.getCurrentUser();
   const isAdmin = user.role === 'ADMIN';
+  
+  // Estado para o evento de instalação (PWA)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   const NavItem = ({ id, icon: Icon, label }: { id: string, icon: any, label: string }) => (
     <button
@@ -54,8 +79,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, activePage, onNavigate
           {isAdmin && <NavItem id="settings" icon={Settings} label="Configurações" />}
         </nav>
 
-        <div className="p-4 bg-pm-800/50 mt-auto border-t border-pm-700">
-          <div className="flex items-center space-x-3 mb-4 p-2 bg-pm-900/50 rounded-xl">
+        <div className="p-4 bg-pm-800/50 mt-auto border-t border-pm-700 space-y-3">
+          {/* Botão de Instalação PWA */}
+          {showInstallBtn && (
+            <button 
+              onClick={handleInstallClick}
+              className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg text-xs uppercase font-black transition-all shadow-lg active:scale-95 animate-pulse"
+            >
+              <Download size={16} />
+              <span>Instalar no PC</span>
+            </button>
+          )}
+
+          <div className="flex items-center space-x-3 p-2 bg-pm-900/50 rounded-xl">
             <div className="w-10 h-10 rounded-full bg-pm-600 border-2 border-pm-500 flex items-center justify-center font-black text-white shadow-lg">
               {user.username.charAt(0)}
             </div>

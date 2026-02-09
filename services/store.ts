@@ -46,94 +46,82 @@ class StoreService {
   private initFirebaseListeners() {
     if (typeof window === 'undefined') return;
 
-    // 1. Listen to Soldiers
-    const soldiersQuery = query(collection(dbFirestore, 'soldiers'));
-    onSnapshot(soldiersQuery, (snapshot) => {
-      const soldiers: Soldier[] = [];
-      snapshot.forEach((doc) => {
-        soldiers.push(doc.data() as Soldier);
-      });
-      // Se vier vazio do firebase, não sobrescrevemos o local se tivermos dados iniciais "mockados"
-      // Apenas atualizamos se tiver dados reais.
-      if (soldiers.length > 0) {
-        this.setLocal('soldiers', soldiers);
+    // Helper para log discreto de erros de permissão
+    const handleError = (context: string) => (error: any) => {
+      // Ignora erros de permissão para não poluir o console, pois o app funciona offline
+      if (error?.code !== 'permission-denied') {
+        console.warn(`Firebase sync error (${context}):`, error);
       }
-    });
+    };
 
-    // 2. Listen to Rosters
-    const rostersQuery = query(collection(dbFirestore, 'rosters'));
-    onSnapshot(rostersQuery, (snapshot) => {
-      const rosters: Roster[] = [];
-      snapshot.forEach((doc) => {
-        rosters.push(doc.data() as Roster);
-      });
-      if (rosters.length > 0) {
-        this.setLocal('rosters', rosters);
-      }
-    });
+    try {
+      // 1. Listen to Soldiers
+      const soldiersQuery = query(collection(dbFirestore, 'soldiers'));
+      onSnapshot(soldiersQuery, (snapshot) => {
+        const soldiers: Soldier[] = [];
+        snapshot.forEach((doc) => {
+          soldiers.push(doc.data() as Soldier);
+        });
+        if (soldiers.length > 0) {
+          this.setLocal('soldiers', soldiers);
+        }
+      }, handleError('soldiers'));
 
-    // 3. Listen to App Settings (Single Document)
-    const settingsDoc = doc(dbFirestore, 'config', 'app_settings');
-    onSnapshot(settingsDoc, (docSnap) => {
-      if (docSnap.exists()) {
-        this.setLocal('app_settings', docSnap.data());
-      }
-    });
+      // 2. Listen to Rosters
+      const rostersQuery = query(collection(dbFirestore, 'rosters'));
+      onSnapshot(rostersQuery, (snapshot) => {
+        const rosters: Roster[] = [];
+        snapshot.forEach((doc) => {
+          rosters.push(doc.data() as Roster);
+        });
+        if (rosters.length > 0) {
+          this.setLocal('rosters', rosters);
+        }
+      }, handleError('rosters'));
 
-    // 4. Listen to Extra Duty History
-    const historyQuery = query(collection(dbFirestore, 'extra_duty_history'));
-    onSnapshot(historyQuery, (snapshot) => {
-      const history: ExtraDutyHistory[] = [];
-      snapshot.forEach((doc) => {
-        history.push(doc.data() as ExtraDutyHistory);
-      });
-      if (history.length > 0) {
-        this.setLocal('extra_duty_history', history);
-      }
-    });
+      // 3. Listen to App Settings (Single Document)
+      const settingsDoc = doc(dbFirestore, 'config', 'app_settings');
+      onSnapshot(settingsDoc, (docSnap) => {
+        if (docSnap.exists()) {
+          this.setLocal('app_settings', docSnap.data());
+        }
+      }, handleError('settings'));
+
+      // 4. Listen to Extra Duty History
+      const historyQuery = query(collection(dbFirestore, 'extra_duty_history'));
+      onSnapshot(historyQuery, (snapshot) => {
+        const history: ExtraDutyHistory[] = [];
+        snapshot.forEach((doc) => {
+          history.push(doc.data() as ExtraDutyHistory);
+        });
+        if (history.length > 0) {
+          this.setLocal('extra_duty_history', history);
+        }
+      }, handleError('history'));
+    } catch (e) {
+      console.warn("Erro ao inicializar listeners do Firebase. O app continuará em modo offline.", e);
+    }
   }
 
   // Helper to sync specific data to Firestore
   private async syncToCloud(collectionName: string, id: string, data: any) {
     try {
       await setDoc(doc(dbFirestore, collectionName, id), data);
-    } catch (e) {
-      console.error(`Erro ao sincronizar ${collectionName}:`, e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error(`Erro ao sincronizar ${collectionName}:`, e);
+      }
     }
   }
 
   private async deleteFromCloud(collectionName: string, id: string) {
     try {
       await deleteDoc(doc(dbFirestore, collectionName, id));
-    } catch (e) {
-      console.error(`Erro ao deletar de ${collectionName}:`, e);
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied') {
+        console.error(`Erro ao deletar de ${collectionName}:`, e);
+      }
     }
-  }
-
-  // --- PUBLIC SYNC METHOD (Manual Trigger) ---
-  // Útil para enviar dados locais iniciais para a nuvem
-  async syncAllToCloud(): Promise<void> {
-     // Settings
-     const settings = this.getSettings();
-     await this.syncToCloud('config', 'app_settings', settings);
-
-     // Soldiers
-     const soldiers = this.getSoldiers();
-     for (const s of soldiers) {
-       await this.syncToCloud('soldiers', s.id, s);
-     }
-
-     // Rosters
-     const rosters = this.getRosters();
-     for (const r of rosters) {
-       await this.syncToCloud('rosters', r.id, r);
-     }
-
-     // History
-     const history = this.getExtraDutyHistory();
-     for (const h of history) {
-       await this.syncToCloud('extra_duty_history', h.id, h);
-     }
   }
 
   // --- LOCAL STORE LOGIC ---
