@@ -77,7 +77,7 @@ export interface Soldier {
   absenceEndDate?: string;
   folgaReason?: string;
   bankHistory?: BankTransaction[]; // Histórico do Banco de Folgas
-  
+
   // Extra Duty Fields
   orderExtra?: number; // Sequência na fila (menor número = topo da fila)
   availableForExtra?: boolean; // Se participa da escala extra
@@ -108,7 +108,7 @@ export interface Shift {
   date: string;
   period: string;
   soldierId: string;
-  note?: string; 
+  note?: string;
   customData?: Record<string, string>; // Dados para colunas dinâmicas (chave = indice da coluna)
 }
 
@@ -119,7 +119,7 @@ export interface RosterRow {
 
 export interface RosterSection {
   title: string;
-  rows: RosterRow[]; 
+  rows: RosterRow[];
 }
 
 export interface Roster {
@@ -151,7 +151,7 @@ export interface AppSettings {
   city: string;
   showPhoneInPrint: boolean;
   shiftCycleRefDate: string;
-  logoLeft: string; 
+  logoLeft: string;
   logoRight: string;
   showLogoLeft: boolean;
   showLogoRight: boolean;
@@ -164,3 +164,24 @@ export interface User {
   username: string;
   role: UserRole;
 }
+
+// Helper para ordenação de patentes
+export const getRankWeight = (rank: string) => {
+  const map: Record<string, number> = {
+    [Rank.CEL]: 1,
+    [Rank.TEN_CEL]: 2,
+    [Rank.MAJ]: 3,
+    [Rank.CAP]: 4,
+    [Rank.TEN_1]: 5,
+    [Rank.TEN_2]: 6,
+    [Rank.ASP]: 7,
+    [Rank.SUBTEN]: 8,
+    [Rank.SGT_1]: 9,
+    [Rank.SGT_2]: 10,
+    [Rank.SGT_3]: 11,
+    [Rank.CB]: 12,
+    [Rank.SD]: 13,
+    [Rank.CIVIL]: 14
+  };
+  return map[rank] || 99;
+};
